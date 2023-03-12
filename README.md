@@ -2,7 +2,7 @@
 
 # Basic Usage
 
-The Feahbas project build process uses [CMake](https://cmake.org/) as the underlying
+The Feabhas project build process uses [CMake](https://cmake.org/) as the underlying
 build system. CMake is itself a build system generator and we have configured
 it to generate the build files used by [GNU Make](https://www.gnu.org/software/make/)
 under Linux or Ninja under Windows when used as a Visual Studio CMake
