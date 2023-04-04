@@ -12,6 +12,8 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set(CLANG_TIDY_OPTIONS -checks=-*,readability-* CACHE STRING "clang-tidy options" )
 
+message(STATUS "Language versions: C++${CMAKE_CXX_STANDARD} C${CMAKE_C_STANDARD}")
+
 # uncomment this line to include clang_tidy as part of 
 # the compilation phase
 # set(CMAKE_CXX_CLANG_TIDY clang-tidy ${CLANG_TIDY_OPTIONS})
@@ -29,6 +31,8 @@ add_compile_options(
     -Wconversion
     -Wsign-conversion
     # -Werror
+    # -save-temps
+    $<IF:$<STREQUAL:${CMAKE_CXX_STANDARD},20>,-Wno-deprecated,>
     $<$<CONFIG:DEBUG>:-g3>
     $<$<CONFIG:DEBUG>:-Og>
     $<$<CONFIG:RELEASE>:-O3>
@@ -79,7 +83,7 @@ find_program(CLANG_TIDY clang-tidy)
 
 if (CLANG_TIDY)
     add_custom_target(
-        clang-tidy clang-tidy -p ${CMAKE_BINARY_DIR}/compile_commands.json ${CLANG_TIDY_OPTIONS} ${USER_SRC}
+        clang-tidy clang-tidy -p ${CMAKE_BINARY_DIR} ${CLANG_TIDY_OPTIONS} ${USER_SRC}
         DEPENDS ${USER_SRC})
 endif()
 
