@@ -125,6 +125,7 @@ for SOL in "${BUILD[@]}"; do
   # handle different template layouts
 
   for dir in $SOURCES; do
+    mkdir -p $dir
     from="$SOL/$dir"
     [[ ! -d $from && $dir == include ]] && from="$SOL/inc"
     if [[ -d "$from" ]]; then
