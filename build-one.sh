@@ -1,12 +1,9 @@
 #!/bin/bash
 
-# The Build all script is intended for checking projects and solutions
-# uploaded to a GIT repo for continuous integration checks.
-
-# It looks for solutions to exercises in a "solutions" folder
+# This script looks for solutions to exercises in a "solutions" folder
 # in a set of standard locations:
 
-SOL_PATH=". .. ../.. $HOME $HOME/course_material"
+SOL_PATH=". ./exercises .. ../exercises $HOME $HOME/exercises"
 
 # Solutions must be in folder names starting or ending with a digit and optional letter.
 # If a solution folder contains a MakeLists.txt file a CMake build is run

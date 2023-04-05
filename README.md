@@ -74,6 +74,41 @@ This is normal: just close the warning popup and use the debug icon commands at 
 manage the debug system. The icons are (from left to right):
   **continue**, **stop over**, **step into**, **step return**, **restart** and **quit**
 
+# Using a template starter project
+
+Some courses provide starter template projects alongside solutions. These will
+be stored in a folder called `exercises` in one of the standard locations shown 
+at the end of this section. 
+
+To select one of the exercise teplates run the script:
+```
+$ ./build-template.sh
+```
+
+This will display a numbered list of template folders and ask you to select one.
+
+Alternatively the script can be run with a partial letter case insensitive match of 
+the start of the name of the template. For example to select a template called 
+`E-meters` run the command:
+```
+$ ./build-template.sh e-m
+```
+
+As long as the name prefix is unique the template will be used. If the prefix is not
+matched the numbered selection list will be shown.
+
+**NOTE:** this will copy all files in the `src` and `include` directories to the `src.bak` directory having
+removed any files already present in `src.bak`.
+
+On the pre-built VM images the exercises are stored in the home directory.
+
+When working with a Docker image you will either be given an archive of the
+exercises, a web link to download the archive, or a link to clone a GIT repo. 
+
+Once you have identified your local copy of the `exercises` you should 
+copy this folder into the workspace (it will contain sub-folders for
+the exercise `templates` and `solutions`)
+
 # Building an exercise solution
 
 To build any of the exercise solutions run the script:
@@ -82,11 +117,17 @@ $ ./build-one.sh N
 ```
 where `N` is the exercise number.
 
-**NOTE:** this will copy all files in the `src` directory to the `src.bak` directory having
+**NOTE:** this will copy all files in the `src` and `include` directories to the `src.bak` directory having
 removed any files already present in `src.bak`.
 
-Do not use the `build-all.sh` script as this will build each solution in turn and is used
-as part of our Continuous Integration testing.
+n the pre-built VM images the solutions are stored in the home directory.
+
+When working with a Docker image you will either be given an archive of the
+solutions, an archive of the exercises, a web link to download the archive,
+or a link to clone a GIT repo. 
+
+Once you have identified your local copy of the `solutions` you should 
+copy this folder into the workspace.
 
 # Static analysis using clang-tidy
 
