@@ -6,7 +6,8 @@
 TEMPLATE_PATH="./exercises . ../exercises .. $HOME/exercises $HOME"
 SOURCES="src include"
 BASE=base.tar.gz
-FILES=".devcontainer .vscode build.sh build-one.sh CMake* $SOURCES"
+FILES=".vscode build.sh build-one.sh CMake* $SOURCES"
+[[ -d .devcontainer ]] && FILES=".devcontainer $FILES"
 
 # All folders in the templates folder must contain a src folder with
 # starter files for a C/C++ exercise which are copied to the src folder,
