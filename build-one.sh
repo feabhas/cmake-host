@@ -1,9 +1,12 @@
 #!/bin/bash
 
-# This script looks for solutions to exercises in a "solutions" folder
+# The Build all script is intended for checking projects and solutions
+# uploaded to a GIT repo for continuous integration checks.
+
+# It looks for solutions to exercises in a "solutions" folder
 # in a set of standard locations:
 
-SOL_PATH=". ./exercises .. ../exercises $HOME $HOME/exercises"
+SOL_PATH=". exercises .. ../exercises ../.. $HOME $HOME/exercises"
 
 # Solutions must be in folder names starting or ending with a digit and optional letter.
 # If a solution folder contains a MakeLists.txt file a CMake build is run
@@ -30,13 +33,17 @@ BACKUP=src.bak
 
 function err_exit {
   [[ -n ${1:-} ]] && echo "$1" >&2
-  echo "Build script for exercise solutions" >&2
-  echo "Usage: $0 [-q|--quiet] [--scons|--cmake] [-A|--all]  [ NN ]" >&2
-  echo "  where NN is the chapter number, or" >&2
-  echo "  -A --all        to build all solutions" >&2
-  echo "  -v --verbose    show diagnostic trace messages" >&2
-  echo "  -q --quiet      to suppress output messages, a build failure is always reported" >&2
-  echo "  --scons --cmake to override default build system" >&2
+  echo >&2 <<EOT
+Build script for exercise solutions
+Usage: $0 [-q|--quiet] [--scons|--cmake] [-cnn] [-c++nn] [-A|--all]  [ NN ]
+  where NN is the chapter number, or
+  -A --all        to build all solutions
+  -v --verbose    show diagnostic trace messages
+  -q --quiet      to suppress output messages, a build failure is always reported
+  --Cnn           pass C version to build.sh also --c
+  --C++nn         pass C++ version to build.sh also --c++ --cpp --CPP
+  --scons --cmake to override default build system
+EOT
   exit 1
 }
 
@@ -68,13 +75,13 @@ EXERCISES=
 SOLDIR=
 REDIR=/dev/stdout
 QUIET=
-ALL=
+EX=
 
-while getopts ":vqhA-:" opt; do
-  [[ $opt == - ]] && opt="--$OPTARG"
-  [[ $opt == \? && $OPTARG == \? ]] && opt="--help"
-  [[ $opt == ? ]] && opt="-$opt"
-  case $opt in
+[[ -z $SOLDIR ]] && get_solutions 
+[[ -z $SOLDIR ]] && err_exit "Cannot find solutions folder"
+
+for arg; do
+  case "$arg" in
     -A|--all) 
       ALL=1
       get_solutions 
@@ -97,39 +104,42 @@ while getopts ":vqhA-:" opt; do
       [[ -n $BUILD ]] && err_exit "Cannot specify more than one build system"
       [[ ! -f CMakeLists.txt ]] && err_exit "Missing CMakeLists.txt file required by cmake"
       BUILD="$CMAKE_BUILD"
-      BUILD_RTOS="$SCMAKE_BUILD"
+      BUILD_RTOS="$CMAKE_BUILD"
       ;;
-    --help) 
+    --[cC][0-9][0-9])
+      BUILD="$CMAKE_BUILD $arg"
+      BUILD_RTOS="$CMAKE_BUILD"
+      ;;
+    --[cC]++[0-9][0-9]|--cpp[0-9][0-9]|--CPP[0-9][0-9])
+      BUILD="$CMAKE_BUILD $arg"
+      BUILD_RTOS="$CMAKE_BUILD $arg"
+      ;;
+    --help|-h|-\?) 
       err_exit 
       ;;
     *) 
-      err_exit "Unknown option '$OPTARG'"
+      [[ -n $EX ]] && err_exit "Cannot specify another solution after '$EX'"
+      EX="$arg"
       ;;
   esac
 done
-shift $(( OPTIND - 1 ))
 
-[[ -z $SOLDIR ]] && get_solutions 
-[[ -z $SOLDIR ]] && err_exit "Cannot find solutions folder"
-
-
-[[ -z $EXERCISES && $# == 0 ]] && err_exit "No solution number specified"
-[[ -z $EXERCISES && $# != 1 ]] && err_exit "Cannot specify multiple solution numbers"
-[[ -n $EXERCISES && $# != 0 ]] && err_exit "Cannot specify -A (-all) and a solution number"
+[[ -z $EXERCISES && -z "$EX" ]] && err_exit "Please supply a solution number or name on the command line"
+[[ -n $EXERCISES && -n "$EX" ]] && err_exit "Cannot specify solution '$EX' and --all"
 
 if [[ -z $EXERCISES ]]; then
-  case $1 in
+  case "$EX" in
     [1-9]|[1-9][A-Z]) 
-      EXERCISES="0$1"
+      EXERCISES="0$EX"
       ;;
     [0-9][0-9]|[0-9][0-9][A-Z]) 
-      EXERCISES="$1"
+      EXERCISES="$EX"
       ;;
     *)
-      if [[ ! -d "$SOLDIR/$1" ]]; then
-        err_exit "Invalid solution number: $1"
+      if [[ ! -d "$SOLDIR/$EX" ]]; then
+        err_exit "Invalid solution number: $EX"
       fi
-      EXERCISES="$1"
+      EXERCISES="$EX"
       ;;
   esac
 fi
@@ -159,7 +169,8 @@ for EX in $EXERCISES; do
     [[ -z $EXDIR ]] && err_exit "No solution provided for exercise $EX"
     (cd $SOLDIR; ls -d $EXDIR); 
     N=$(cd $SOLDIR; ls -d $EXDIR | wc -l)
-    (( N > 1 )) && err_exit "Configuration error - multiple solutions for exercise $EX"
+    (( N > 1 )) && err_exit "Multiple solutions for exercise $EX
+    Please specify number and letter, or the full solution name"
   fi
 
   for src in $SOURCES; do
