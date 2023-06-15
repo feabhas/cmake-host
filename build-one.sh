@@ -38,6 +38,7 @@ Build script for exercise solutions
 Usage: $0 [-q|--quiet] [--scons|--cmake] [-cnn] [-c++nn] [-A|--all]  [ NN ]
   where NN is the chapter number, or
   -A --all        to build all solutions
+  -c --copy       copy without building the solution
   -v --verbose    show diagnostic trace messages
   -q --quiet      to suppress output messages, a build failure is always reported
   --Cnn           pass C version to build.sh also --c
@@ -70,12 +71,14 @@ function get_all_exercises {
   done
 }
 
+
 VERBOSE=
 EXERCISES=
 SOLDIR=
 REDIR=/dev/stdout
 QUIET=
 EX=
+COPY=
 
 [[ -z $SOLDIR ]] && get_solutions 
 [[ -z $SOLDIR ]] && err_exit "Cannot find solutions folder"
@@ -86,6 +89,9 @@ for arg; do
       ALL=1
       get_solutions 
       get_all_exercises $SOLDIR
+      ;;
+    -c|--copy)
+      COPY=1
       ;;
     -v|--verbose) 
       VERBOSE=y
@@ -194,37 +200,40 @@ for EX in $EXERCISES; do
     cp -f "$SOLDIR/$EXDIR"/* src 2>/dev/null || true
   fi
 
-  # run build
-  RTOS=
-  if grep -iq 'feabhOS[a-z_0-9]*\.h' include/*.h src/*.c src/*.cpp 2>/dev/null; then
-    RTOS=1
-  fi
-  
-  if [[ -n $VERBOSE ]]; then
-    echo "checking $EX" >&2
-  fi
-  
-  set +o errexit
+  if [[ -z $COPY ]]; then
+    # run build
+    RTOS=
+    if grep -iq 'feabhOS[a-z_0-9]*\.h' include/*.h src/*.c src/*.cpp 2>/dev/null; then
+      RTOS=1
+    fi
+    
+    if [[ -n $VERBOSE ]]; then
+      echo "checking $EX" >&2
+    fi
+    
+    set +o errexit
 
-  if [[ -n $BUILD ]]; then
-    [[ -n $RTOS ]] && BUILD="$BUILD_RTOS"
-    trace "Building solutions using $BUILD"
-    (eval $(echo "$BUILD")) >$REDIR 2>&1
-  elif [[ -f CMakeLists.txt ]]; then
-    trace "Running cmake build: $CMAKE_BUILD"
-    (eval $(echo "$CMAKE_BUILD")) >$REDIR 2>&1
-  elif [[ -f SConstruct ]]; then
-    [[ -n $RTOS ]] && SCONS_BUILD="$SCONS_RTOS"
-    trace "Running scons build: $SCONS_BUILD"
-    (eval $(echo "$SCONS_BUILD")) >$REDIR 2>&1
-  else
-    err_exit "Cannot file suitable build configuration file"
+    if [[ -n $BUILD ]]; then
+      [[ -n $RTOS ]] && BUILD="$BUILD_RTOS"
+      trace "Building solutions using $BUILD"
+      (eval $(echo "$BUILD")) >$REDIR 2>&1
+    elif [[ -f CMakeLists.txt ]]; then
+      trace "Running cmake build: $CMAKE_BUILD"
+      (eval $(echo "$CMAKE_BUILD")) >$REDIR 2>&1
+    elif [[ -f SConstruct ]]; then
+      [[ -n $RTOS ]] && SCONS_BUILD="$SCONS_RTOS"
+      trace "Running scons build: $SCONS_BUILD"
+      (eval $(echo "$SCONS_BUILD")) >$REDIR 2>&1
+    else
+      err_exit "Cannot file suitable build configuration file"
+    fi
+    status=$?
+    if [[ $status != 0 ]]; then
+      echo "Build failed for solution $EX"
+      exit $status
+    fi
+    set -o errexit
   fi
-  status=$?
-  if [[ $status != 0 ]]; then
-    echo "Build failed for solution $EX"
-    exit $status
-  fi
-  set -o errexit
 done
+
 

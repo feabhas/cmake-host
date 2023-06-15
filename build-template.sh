@@ -1,13 +1,9 @@
 #!/bin/bash
-
 # This script looks for exercise templates
 # in a set of standard locations:
 
 TEMPLATE_PATH="./exercises . ../exercises .. $HOME/exercises $HOME"
 SOURCES="src include"
-BASE=base.tar.gz
-FILES=".vscode build.sh build-one.sh CMake* $SOURCES"
-[[ -d .devcontainer ]] && FILES=".devcontainer $FILES"
 
 # All folders in the templates folder must contain a src folder with
 # starter files for a C/C++ exercise which are copied to the src folder,
@@ -49,7 +45,7 @@ function get_template_dir {
 }
 
 
-TEMPLATE=
+TEMPLATE_DIR=
 ALL=
 BUILD=
 KEEP=
@@ -59,20 +55,26 @@ for arg; do
     --build|-b) BUILD=1 ;;
     --keep|-k) KEEP=1 ;;
     *)
-      if [[ -n "$TEMPLATE" ]]; then
-          usage "Unknown argument $arg: template already set to $TEMPLATE"
+      if [[ -n "$TEMPLATE_DIR" ]]; then
+          usage "Unknown argument $arg: template already set to $TEMPLATE_DIR"
       fi
-      TEMPLATE="$arg"
+      TEMPLATE_DIR="$arg"
       ;;
   esac
 done
 
-get_template_dir
-TEMPLATE=${TEMPLATE,,}
+[[ -z "$TEMPLATE_DIR" ]] && get_template_dir
 SOL=
 DIRS=()
 
 SOLUTIONS_DIR=$(dirname $TEMPLATE_DIR)/solutions
+
+[[ -d build ]] && rm -rf build
+
+FILES=$(ls -d * | grep -Ev '^(exercises|solutions|LICENSE.*)$' | grep -v "$(basename $0)")
+for dir in .vscode .devcontainer; do
+  [[ -d "$dir" ]] && FILES="$dir $FILES"
+done
 
 for t in "$TEMPLATE_DIR"/*; do
   [[ ! -d "$t/src" ]] && continue
@@ -91,7 +93,7 @@ for t in "$TEMPLATE_DIR"/*; do
 
   mkdir -p "$name"
   tar c -O $FILES | (cd "$name"; tar xf -)
-  cp -r $SOLUTIONS_DIR $name
+  [[ -d $SOLUTIONS_DIR ]] && cp -r $SOLUTIONS_DIR $name
   if [[ -n $BUILD ]]; then 
     if ! (cd "$name"; ./build.sh reset 2>&1); then
       echo "Build failed for template $SOL"
@@ -104,4 +106,8 @@ done
 if [[ -z $KEEP ]]; then
   mkdir -p project 2>/dev/null || true
   mv $FILES project
+  for dir in src include; do
+    [[ -d "$dir" ]] && mv "$dir" project
+  done 
 fi
+
