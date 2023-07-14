@@ -1,8 +1,12 @@
 cmake_minimum_required(VERSION 3.16)
 project(host-gcc LANGUAGES C CXX)
 
-set(CMAKE_C_STANDARD 11)
-set(CMAKE_CXX_STANDARD 20)
+# store defaults in cache so they can be overriden on the command line
+
+set(CMAKE_C_STANDARD 11 CACHE STRING "Default C version")
+set(CMAKE_CXX_STANDARD 17 CACHE STRING "Default C++ version")
+
+message(STATUS "Standards: C${CMAKE_C_STANDARD} C++${CMAKE_CXX_STANDARD}")
 
 set(CMAKE_C_EXTENSIONS OFF)
 set(CMAKE_C_STANDARD_REQUIRED ON)
@@ -20,7 +24,13 @@ message(STATUS "Language versions: C++${CMAKE_CXX_STANDARD} C${CMAKE_C_STANDARD}
 
 if(MSVC)
 add_compile_options(
-    /W4
+	/std:c++latest
+    /experimental:module	   
+    /DWIN32 
+    /D_WINDOWS 
+    /W4 
+    /GR 
+    /EHsc
     $<$<CONFIG:DEBUG>:/Od>
     $<$<CONFIG:RELEASE>:/O2>
 )
@@ -31,8 +41,10 @@ add_compile_options(
     -Wconversion
     -Wsign-conversion
     # -Werror
-    # -save-temps
-    $<IF:$<STREQUAL:${CMAKE_CXX_STANDARD},20>,-Wno-deprecated,>
+    -save-temps
+    $<$<AND:$<COMPILE_LANGUAGE:CXX>,$<EQUAL:${CMAKE_CXX_STANDARD},20>>:-Wno-deprecated>
+    # $<$<AND:$<COMPILE_LANGUAGE:CXX>,$<VERSION_GREATER_EQUAL:${CMAKE_CXX_STANDARD},20>>:-fcoroutines>
+    $<$<AND:$<COMPILE_LANGUAGE:CXX>,$<VERSION_GREATER_EQUAL:${CMAKE_CXX_STANDARD},20>>:-fmodules-ts>
     $<$<CONFIG:DEBUG>:-g3>
     $<$<CONFIG:DEBUG>:-Og>
     $<$<CONFIG:RELEASE>:-O3>
@@ -45,6 +57,29 @@ add_compile_definitions(
     $<$<CONFIG:RELEASE>:NDEBUG>   # GCC/G++ disables asserts
 )
 
+# C++20 support requires a modules.txt file to be added to the src folder
+# to list each module file in build order
+
+if (EXISTS ${CMAKE_SOURCE_DIR}/src/Modules.txt)
+  file(STRINGS ${CMAKE_SOURCE_DIR}/src/Modules.txt MODULE_SRC)
+  list(TRANSFORM MODULE_SRC STRIP)
+  message(STATUS "Building modules: ${MODULE_SRC}")
+  list(TRANSFORM MODULE_SRC PREPEND ${CMAKE_SOURCE_DIR}/src/)
+  add_library(modules OBJECT
+    ${MODULE_SRC}
+  )
+
+  target_include_directories(modules PRIVATE
+    ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}/include
+  )
+  if (${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU" OR ${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
+    target_compile_options(modules PRIVATE
+      -xc++
+    )
+  endif()
+endif()
+
 # WARNING: wildcards are expanded at generate time, not build time
 # regenerate the build if new source files are added
 
@@ -56,6 +91,10 @@ target_include_directories(Application PRIVATE
   ${CMAKE_SOURCE_DIR}/src
   ${CMAKE_SOURCE_DIR}/include
 )
+
+if (TARGET modules)
+    target_link_libraries(Application PRIVATE modules)
+endif()
 
 set(CMAKE_THREAD_PREFER_PTHREAD ON)
 set(THREADS_PREFER_PTHREAD_FLAG ON)

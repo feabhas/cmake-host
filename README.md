@@ -42,6 +42,8 @@ You can add a `-v` option see the underlying build commands:
 $ ./build.sh -v
 ```
 
+The `build.sh` script supports the `--help` option for more information.
+
 ## To clean the build
 
 To delete all object files and recompile the complete project use
@@ -74,41 +76,6 @@ This is normal: just close the warning popup and use the debug icon commands at 
 manage the debug system. The icons are (from left to right):
   **continue**, **stop over**, **step into**, **step return**, **restart** and **quit**
 
-# Using a template starter project
-
-Some courses provide starter template projects alongside solutions. These will
-be stored in a folder called `exercises` in one of the standard locations shown 
-at the end of this section. 
-
-To select one of the exercise teplates run the script:
-```
-$ ./build-template.sh
-```
-
-This will display a numbered list of template folders and ask you to select one.
-
-Alternatively the script can be run with a partial letter case insensitive match of 
-the start of the name of the template. For example to select a template called 
-`E-meters` run the command:
-```
-$ ./build-template.sh e-m
-```
-
-As long as the name prefix is unique the template will be used. If the prefix is not
-matched the numbered selection list will be shown.
-
-**NOTE:** this will copy all files in the `src` and `include` directories to the `src.bak` directory having
-removed any files already present in `src.bak`.
-
-On the pre-built VM images the exercises are stored in the home directory.
-
-When working with a Docker image you will either be given an archive of the
-exercises, a web link to download the archive, or a link to clone a GIT repo. 
-
-Once you have identified your local copy of the `exercises` you should 
-copy this folder into the workspace (it will contain sub-folders for
-the exercise `templates` and `solutions`)
-
 # Building an exercise solution
 
 To build any of the exercise solutions run the script:
@@ -117,28 +84,26 @@ $ ./build-one.sh N
 ```
 where `N` is the exercise number.
 
-**NOTE:** this will copy all files in the `src` and `include` directories to the `src.bak` directory having
+**NOTE:** this will copy all files in the `src` directory to the `src.bak` directory having
 removed any files already present in `src.bak`.
 
-n the pre-built VM images the solutions are stored in the home directory.
+The `build-one.sh` script supports the `--help` option for more information.
 
-When working with a Docker image you will either be given an archive of the
-solutions, an archive of the exercises, a web link to download the archive,
-or a link to clone a GIT repo. 
+Do not use the `--all` option as this will build each solution in turn and is used
+as part of our Continuous Integration testing.
 
-Once you have identified your local copy of the `solutions` you should 
-copy this folder into the workspace.
+# C/C++ Versions
 
-# Static analysis using clang-tidy
+The build system supports compiling against different versions of C and C++ with the 
+default set in `MakeLists.txt` as C11 and C++17. The `build.sh` and `build-one.sh` scripts
+accept a version option to choose a different language option. To compile against C99 add 
+the optiuon `--c99 (or --C99) or for C++20 add --cpp20 (or --c++20 --C++20 --CPP20).
 
-The CMake build scripts create a `clang-tidy` target in the generated build files if
-`clang-tidy` is in the command search path (`$PATH` under Linux).
+# C++20 Modules
 
-To check all of the build files run the command:
-```
-$ ./build.sh clang-tidy
-```
-
-To run `clang-tidy` as part of the compilation process edit the `CMakeLists.txt` file
-and uncomment the line starting with `set(CMAKE_CXX_CLANG_TIDY`.
+Support for compiling C++ modules is enabled by creating a file `Modules.txt` in the
+`src` folder and defining each module filename on a separate line in this file. The build 
+ensures modules are compiled in the order defined in the `Modules.txt` file and before the 
+main `src` files. Following MSVC and VS Code conventions the modules should be defined 
+in `*.ixx` files.
 

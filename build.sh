@@ -27,34 +27,29 @@ if ! $CMAKE --version >/dev/null 2>&1; then
     exit 1
 fi
 
-BUILD=build
-TYPE=DEBUG
-BUILD_DIR=$BUILD/debug
-VERBOSE=
-FILE_LIST=filelist.txt
-TEST=
-CLANG_TIDY=
-
 function usage {
   cat <<EOT
 Usage: ${0#.*/} [options...]
   Wrapper around cmake build system.
-  Options:
-    clean      -- remove object files
-    reset      -- regenerate make files and do a clean build
-    debug      -- build debug version (default)
-    release    -- build release version
+  Generate options:
+    reset      -- generate (always) and build
+    debug      -- generate/build debug version (default)
+    release    -- generate/build release version
+    --Cnn      -- set C langauge version to nn, also -c
+    --C++nn    -- set C langauge version to nn, also -cpp -CPP
+    -Dvar=val  -- define a CMake variable which must have a value
+   Build options:
+    --verbose  -- show compiler commands also -v
+    clean      -- remove object files and build
     test       -- run cmake with test target after a build
     clang-tidy -- run clang-tidy after a build
-    --c        -- generate main.c if it doesn't exist
-    --cpp      -- generate main.cpp if it doesn't exist
-    --verbose  -- add verbose option also -v
-    --help     -- this help information also -h -?
-    -Werror    -- adds -Werror to build
-    -Dvar=val  -- define a CMake variable which must have a value
-  
+  Other options:
+    --c        -- generate main.c if it doesn't exist, also -C
+    --c++      -- generate main.cpp if it doesn't exist, also -cpp -C++
+    --help     -- this help information, also -h -?
+ 
   Output written to build/debug (or build/release), executables:
-      host:       build/debug/Application
+      build/debug/Application
   Generates compile_commands.json used by tools like clang-tidy.
   Set clang_tidy options using -DCLANG_TIDY_OPTIONS="options"
   Script will generate a missing main.c/main.cpp based on the
@@ -99,24 +94,34 @@ EOT
     fi
 }
 
+
+BUILD=build
+CONFIG=debug
 RESET=
 CLEAN=
 CMAKE_OPTS=
 LANG=
+VERBOSE=
+TEST=
+CLANG_TIDY=
 
 for arg; do
   case "$arg" in
     --help|-h|-\?) usage    ;;
     --verbose|-v)  VERBOSE='VERBOSE=1'  ;;
-    debug)         TYPE=DEBUG;   BUILD_DIR=$BUILD/debug ;;
-    release)       TYPE=RELEASE; BUILD_DIR=$BUILD/release  ;;
+    debug)         CONFIG=debug ;;
+    release)       CONFIG=release ;;
     test)          TEST=1   ;;
     clang-tidy)    CLANG_TIDY=1 ;;
-    clean)         CLEAN=1  ;;
+    clean)         CLEAN=--clean-first ;;
     reset)         RESET=1  ;;
-    --c)           LANG=c   ;;
-    --cpp)         LANG=cpp ;;
-    -Werror)       CMAKE_OPTS="$CMAKE_OPTS -DCMAKE_CXX_FLAGS=-Werror -DCMAKE_C_FLAGS=-Werror"  ;;
+    --[cC])        LANG=c   ;;
+    --cpp|--CPP|--[cC]++)   
+                   LANG=cpp ;;
+    --[cC][0-9][0-9]) 
+                   CMAKE_OPTS="$CMAKE_OPTS -DCMAKE_C_STANDARD=${arg#--[cC]}" ;;
+    --[cC]++[0-9][0-9]|--CPP[0-9][0-9]|--cpp[0-9][0-9]) 
+                   CMAKE_OPTS="$CMAKE_OPTS -DCMAKE_CXX_STANDARD=${arg#--[cC]??}" ;;
     -D*)           CMAKE_OPTS="$CMAKE_OPTS $arg" ;;
     *)
       echo "Unknown option $arg" >&2
@@ -136,31 +141,35 @@ fi
 
 # force clean generate
 
-if [[ -n $RESET && -d $BUILD_DIR ]]; then
-  rm -rf $BUILD_DIR
-elif [[ ! -d $BUILD_DIR ]]; then
+FSTAMP='.files.md5'
+old=
+if [[ -f "$FSTAMP" ]]; then
+    old=$(cat $FSTAMP)
+fi
+find include src -name '*.[ch]' -o -name '*.cpp' | md5sum >$FSTAMP
+new=$(cat $FSTAMP)
+[[ "$old" != "$new" ]] && RESET=1
+
+if [[ -n $RESET && -d $BUILD/$CONFIG ]]; then
+  rm -rf $BUILD/$CONFIG
+elif [[ ! -d $BUILD/$CONFIG ]]; then
   RESET=1
 fi
 
 # run cmake
 
-$CMAKE -S . -B $BUILD_DIR --warn-uninitialized -DCMAKE_BUILD_TYPE=$TYPE $CMAKE_OPTS
-
-if [[ -n $CLEAN ]]; then
-  $CMAKE --build $BUILD_DIR --target clean
+if [[ -n $RESET ]]; then
+    $CMAKE --preset ${CONFIG} $CMAKE_OPTS
 fi
 
-if $CMAKE --build $BUILD_DIR --config Debug -- --no-print-directory $VERBOSE
+if $CMAKE --build --preset ${CONFIG} ${CLEAN} -- $VERBOSE
 then
   if [[ -n $CLANG_TIDY ]]; then
-    $CMAKE --build $BUILD_DIR --target clang-tidy
+    $CMAKE --build --preset clang-tidy
   fi
-
   if [[ -n $TEST ]]; then
-    $CMAKE --build $BUILD_DIR -- test -- ARGS="--output-on-failure"
+    $CMAKE --build --preset test
   fi
 else
   exit $?
 fi
-
-
