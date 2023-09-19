@@ -1,0 +1,75 @@
+{
+    "version": 3,
+    "cmakeMinimumRequired": {
+      "major": 3,
+      "minor": 21,
+      "patch": 0
+    },
+    "configurePresets": [
+        {
+            "name": "base",
+            "hidden": true,
+            "generator": "Unix Makefiles",
+            "binaryDir": "${sourceDir}/build/${presetName}",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug"
+            },
+            "warnings": {
+                "uninitialized": true,
+                "dev": true,
+                "deprecated": true
+            },
+            "vendor": {
+                "microsoft.com/VisualStudioSettings/CMake/1.0": {
+                    "intelliSenseMode": "linux-gcc-arm"
+                }
+            }
+        },
+        {
+            "name": "debug",
+            "displayName": "Debug",
+            "inherits": "base"
+        },
+        {
+            "name": "release",
+            "displayName": "Release",
+            "inherits": "base",
+            "environment": {
+                "CMAKE_BUILD_TYPE": "Release"
+            }
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "build-base",
+            "hidden": true,
+            "configurePreset": "debug",
+            "nativeToolOptions": [
+                "--no-print-directory"
+            ]
+        },
+        {
+            "name": "debug",
+            "inherits": "build-base"
+        },
+        {
+            "name": "release",
+            "inherits": "build-base",
+            "configurePreset": "release"
+        },
+        {
+            "name": "clang-tidy",
+            "inherits": "debug",
+            "targets": [ "clang-tidy" ]
+        },
+        {
+            "name": "test",
+            "inherits": "debug",
+            "targets": [ "test" ],
+            "nativeToolOptions": [
+                "ARGS=--output-on-failure"
+            ]
+        }
+    ]
+}
+

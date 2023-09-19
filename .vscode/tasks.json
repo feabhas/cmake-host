@@ -31,21 +31,23 @@
             "group": "build",
             "problemMatcher": []
         },
-		{
+        {
+            "label": "Run Application",
+            "dependsOn": "Build",
+            "type": "shell",
+            "command": "build/debug/Application",
+            "args": [],
+            "group": "test",
+            "problemMatcher": []
+        },
+        {
             "label": "Clang-tidy",
+            "dependsOn": "Build",
             "type": "shell",
             "command": "${workspaceFolder}/build.sh",
             "args": [
                 "clang-tidy"
             ],
-            "group": "test",
-            "problemMatcher": []
-        },
-        {
-            "label": "Run Application",
-            "type": "shell",
-            "command": "build/debug/Application",
-            "args": [],
             "group": "test",
             "problemMatcher": []
         }
