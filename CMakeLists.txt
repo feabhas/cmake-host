@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.21)
 project(host-gcc LANGUAGES C CXX)
 
 # store defaults in cache so they can be overriden on the command line
@@ -12,6 +12,7 @@ set(CMAKE_C_EXTENSIONS OFF)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set(CLANG_TIDY_OPTIONS -checks=-*,readability-* CACHE STRING "clang-tidy options" )
@@ -24,7 +25,7 @@ message(STATUS "Language versions: C++${CMAKE_CXX_STANDARD} C${CMAKE_C_STANDARD}
 
 if(MSVC)
 add_compile_options(
-	/std:c++latest
+    /std:c++latest
     /experimental:module	   
     /DWIN32 
     /D_WINDOWS 
@@ -40,8 +41,7 @@ add_compile_options(
     -Wextra
     -Wconversion
     -Wsign-conversion
-    # -Werror
-    -save-temps
+    # -save-temps
     $<$<AND:$<COMPILE_LANGUAGE:CXX>,$<EQUAL:${CMAKE_CXX_STANDARD},20>>:-Wno-deprecated>
     # $<$<AND:$<COMPILE_LANGUAGE:CXX>,$<VERSION_GREATER_EQUAL:${CMAKE_CXX_STANDARD},20>>:-fcoroutines>
     $<$<AND:$<COMPILE_LANGUAGE:CXX>,$<VERSION_GREATER_EQUAL:${CMAKE_CXX_STANDARD},20>>:-fmodules-ts>

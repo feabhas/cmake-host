@@ -27,6 +27,22 @@ if ! $CMAKE --version >/dev/null 2>&1; then
     exit 1
 fi
 
+GENERATOR='Ninja'
+BUILD_OPTIONS=
+BUILD_VERBOSE='-v'
+
+if [[ -n $(type -p ninja) ]]; then
+  echo "Build generator: ninja $(ninja --version)"
+elif [[ -n $(type -p make) ]]; then
+  echo "Build generator: $(make --version | head -1)"
+  GENERATOR='Unix Makefiles'
+  BUILD_OPTIONS='--no-print-directory'
+  BUILD_VERBOSE='VERBOSE=1'
+else
+  echo "Cannot find 'ninja' or GNU 'make' command:" >&2
+  exit 1
+fi
+
 function usage {
   cat <<EOT
 Usage: ${0#.*/} [options...]
@@ -107,7 +123,7 @@ CLANG_TIDY=
 for arg; do
   case "$arg" in
     --help|-h|-\?) usage    ;;
-    --verbose|-v)  VERBOSE='VERBOSE=1'  ;;
+    --verbose|-v)  VERBOSE="$BUILD_VERBOSE"  ;;
     debug)         CONFIG=debug ;;
     release)       CONFIG=release ;;
     test)          TEST=1   ;;
@@ -158,10 +174,10 @@ fi
 # run cmake
 
 if [[ -n $RESET ]]; then
-    $CMAKE --preset ${CONFIG} $CMAKE_OPTS
+    $CMAKE --preset ${CONFIG} -G "$GENERATOR"  $CMAKE_OPTS
 fi
 
-if $CMAKE --build --preset ${CONFIG} ${CLEAN} -- $VERBOSE
+if $CMAKE --build --preset ${CONFIG} ${CLEAN} -- $BUILD_OPTIONS $VERBOSE
 then
   if [[ -n $CLANG_TIDY ]]; then
     $CMAKE --build --preset clang-tidy
