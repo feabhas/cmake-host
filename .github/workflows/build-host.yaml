@@ -1,0 +1,16 @@
+name: cmake-host
+
+on: [push]
+
+jobs:
+    build:         
+        runs-on: ubuntu-latest
+        environment: build
+        container:
+            image: feabhas/ubuntu-projects:latest
+            options: -u 1001
+        steps:   
+            - name: build
+              run: |
+                bash ./build.sh
+                
