@@ -9,8 +9,12 @@ jobs:
         container:
             image: feabhas/ubuntu-projects:latest
             options: -u 1001
-        steps:   
+        steps:
+            - name: checkout
+              uses: actions/checkout@v4
+              with:
+                sparse-checkout: solutions
+                fetch-depth: 1     
             - name: build
               run: |
                 bash ./build.sh
-                
