@@ -56,9 +56,7 @@ In the project root run:
 $ ./build.sh
 ```
 
-This will generate the file `build/debug/Application.elf` on an Arm target 
-project or `build/debug/Application` on the host. Additional size and hex files
-used by some flash memory software tools are generated for the Arm target.
+This will generate the executable file `build/debug/Application`. 
 
 You can add a `-v` option see the underlying build commands:
 
@@ -107,16 +105,6 @@ Exception has occurred.
 This is normal: just close the warning popup and use the debug icon commands at the top 
 manage the debug system. The icons are (from left to right):
    * **continue** **stop over** **step into**  **step return** **restart** **quit**
-
-When working with QEMU additional debug launch tasks are available from the drop down list
-at the top of the debug view:
-
-   * **QEMU debug** for a debug session with graphic WMS window
-   * **QEMU nographic debug** for a debug session without the graphic WMS window
-   * **QEMU serial debug** for a debug session using the serial port
-
-Note that when using the debugger with a serial port you must use an external
-Linux terminal to run Telnet and must have the graphic WMS window displayed.
 
 # Building an exercise solution
 
@@ -180,7 +168,6 @@ where `<COURSE>` is the unique code for your course (such as cpp11-501).
 
 If you know you course code you can supply this as a command line parameter
 to the script.
-
 
 # Creating template starter projects
 
