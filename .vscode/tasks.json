@@ -33,7 +33,6 @@
         },
         {
             "label": "Run Application",
-            "dependsOn": "Build",
             "type": "shell",
             "command": "build/debug/Application",
             "args": [],
