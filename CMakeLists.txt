@@ -57,29 +57,6 @@ add_compile_definitions(
     $<$<CONFIG:RELEASE>:NDEBUG>   # GCC/G++ disables asserts
 )
 
-# C++20 support requires a modules.txt file to be added to the src folder
-# to list each module file in build order
-
-if (EXISTS ${CMAKE_SOURCE_DIR}/src/Modules.txt)
-  file(STRINGS ${CMAKE_SOURCE_DIR}/src/Modules.txt MODULE_SRC)
-  list(TRANSFORM MODULE_SRC STRIP)
-  message(STATUS "Building modules: ${MODULE_SRC}")
-  list(TRANSFORM MODULE_SRC PREPEND ${CMAKE_SOURCE_DIR}/src/)
-  add_library(modules OBJECT
-    ${MODULE_SRC}
-  )
-
-  target_include_directories(modules PRIVATE
-    ${CMAKE_SOURCE_DIR}/src
-    ${CMAKE_SOURCE_DIR}/include
-  )
-  if (${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU" OR ${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
-    target_compile_options(modules PRIVATE
-      -xc++
-    )
-  endif()
-endif()
-
 # WARNING: wildcards are expanded at generate time, not build time
 # regenerate the build if new source files are added
 
@@ -92,8 +69,23 @@ target_include_directories(Application PRIVATE
   ${CMAKE_SOURCE_DIR}/include
 )
 
-if (TARGET modules)
-    target_link_libraries(Application PRIVATE modules)
+# C++20 support requires a CMakeLists.txt file to be added to the src folder
+# to build a modules OBJECT with .ixx source file in required build order
+
+if (EXISTS ${CMAKE_SOURCE_DIR}/src/CMakeLists.txt)
+  if (${CMAKE_GENERATOR} STREQUAL Ninja )
+    message(SEND_ERROR "C++20 module build requires Makefile generator not: ${CMAKE_GENERATOR}")
+  endif()
+  if (${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
+    set(GCM_CACHE_DIR ${CMAKE_BINARY_DIR}/gcm.cache)
+    file (MAKE_DIRECTORY ${GCM_CACHE_DIR})    
+    add_compile_options(
+      -fmodule-mapper=|@g++-mapper-server\ -r${GCM_CACHE_DIR}
+    )
+  endif()
+
+  add_subdirectory(${CMAKE_SOURCE_DIR}/src)
+  target_link_libraries(Application PRIVATE modules)
 endif()
 
 set(CMAKE_THREAD_PREFER_PTHREAD ON)
@@ -132,3 +124,4 @@ if (EXISTS ${CMAKE_SOURCE_DIR}/tests/CMakeLists.txt)
   enable_testing()
   add_subdirectory(tests)
 endif()
+
