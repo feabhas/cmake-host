@@ -32,7 +32,7 @@
             "problemMatcher": []
         },
         {
-            "label": "Run Application",
+            "label": "Run: Application",
             "type": "shell",
             "command": "build/debug/Application",
             "args": [],
@@ -40,12 +40,22 @@
             "problemMatcher": []
         },
         {
-            "label": "Clang-tidy",
+            "label": "Test: clang-tidy",
             "dependsOn": "Build",
             "type": "shell",
             "command": "${workspaceFolder}/build.sh",
             "args": [
                 "clang-tidy"
+            ],
+            "group": "test",
+            "problemMatcher": []
+        },
+        {
+            "label": "Test: copy solution",
+            "type": "shell",
+            "command": "python3",
+            "args": [
+                "${workspaceFolder}/scripts/copy_solution.py"
             ],
             "group": "test",
             "problemMatcher": []
