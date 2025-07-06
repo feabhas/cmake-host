@@ -205,6 +205,19 @@ for EX in $EXERCISES; do
     cp -f "$SOLDIR/$EXDIR"/* src 2>/dev/null || true
   fi
 
+  # Check and copy test files if 'tests' directory exists
+  if [[ -d "$SOLDIR/$EXDIR/tests" ]]; then
+    trace "Copying test files from $SOLDIR/$EXDIR/tests"
+    rm -rf tests
+    mkdir tests
+    cp -f "$SOLDIR/$EXDIR/tests"/* tests 2>/dev/null || true
+  else
+    if [[ -d tests ]]; then
+      trace "Removing test files from tests"
+      rm -rf tests
+    fi
+  fi
+
   if [[ -z $COPY ]]; then
     # run build
     RTOS=

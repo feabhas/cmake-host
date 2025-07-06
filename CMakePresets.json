@@ -64,10 +64,10 @@
         {
             "name": "test",
             "inherits": "debug",
-            "targets": [ "test" ],
-            "nativeToolOptions": [
-                "ARGS=--output-on-failure"
-            ]
+            "targets": [ "test" ]
+            // "nativeToolOptions": [
+            //  "ARGS=--output-on-failure"
+            // ]
         }
     ]
 }
