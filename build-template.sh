@@ -113,7 +113,7 @@ rm -rf src/* include/*
 for t in "$TEMPLATE_DIR"/*; do
   [[ ! -d "$t/src" ]] && continue
   name=$(basename $t)
-  name=${name,,}
+  name=$(echo "$name" | tr '[:upper:]' '[:lower:]')
   if [[ -d "$name" ]]; then
     echo "Subfolder '$name' already exists - skipping template $(basename $t)"
     continue 
@@ -129,7 +129,7 @@ for t in "$TEMPLATE_DIR"/*; do
   done
 
   mkdir -p "$name"
-  tar c -O $FILES | (cd "$name"; tar xf -)
+  tar cf - $FILES | (cd "$name"; tar xf -)
   [[ -d $SOLUTIONS_DIR ]] && cp -r $SOLUTIONS_DIR $name
   rm -rf src/* include/*
   if [[ -n $BUILD ]]; then 
