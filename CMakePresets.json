@@ -65,9 +65,6 @@
             "name": "test",
             "inherits": "debug",
             "targets": [ "test" ]
-            // "nativeToolOptions": [
-            //  "ARGS=--output-on-failure"
-            // ]
         }
     ]
 }
